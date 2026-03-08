@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="ht">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chita Tann – Livrezon Rapid ann Ayiti</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+var DB={
+  _g:function(c){try{return JSON.parse(localStorage.getItem('ct_'+c)||'[]');}catch(e){return[];}},
+  _s:function(c,a){localStorage.setItem('ct_'+c,JSON.stringify(a));},
+  collection:function(col){
+    var self=this;
+    return {
+      get:function(){
+        var d=self._g(col);
+        return Promise.resolve({docs:d.map(function(x){return {id:x.id,exists:true,data:function(){return x;}};})}); 
+      },
+      add:function(data){
+        var d=self._g(col);
+        data.id=col+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
+        d.push(data);self._s(col,d);
+        return Promise.resolve({id:data.id});
+      },
+      doc:function(id){
+        return {
+          get:function(){
+            var d=self._g(col);
+            var f=d.find(function(x){return x.id===id;});
+            return Promise.resolve(f?{id:f.id,exists:true,data:function(){return f;}}:{exists:false});
+          },
+          set:function(data){
+            var d=self._g(col);
+            var i=d.findIndex(function(x){return x.id===id;});
+            data.id=id;
+            if(i>=0)d[i]=data;else d.push(data);
+            self._s(col,d);return Promise.resolve();
+          },
+          update:function(data){
+            var d=self._g(col);
+            var i=d.findIndex(function(x){return x.id===id;});
+            if(i>=0)d[i]=Object.assign(d[i],data);
+            self._s(col,d);return Promise.resolve();
+          },
+          delete:function(){
+            var d=self._g(col);
+            self._s(col,d.filter(function(x){return x.id!==id;}));
+            return Promise.resolve();
+          }
+        };
+      },
+      where:function(f,op,v){
+        var d=self._g(col);
+        var r=d.filter(function(x){return op==='=='?x[f]===v:true;});
+        return {get:function(){return Promise.resolve({docs:r.map(function(x){return {id:x.id,exists:true,data:function(){return x;}};})});}};
+      }
+    };
+  }
+};
+(function(){
+  var a=JSON.parse(localStorage.getItem('ct_admins')||'[]');
+  if(!a.find(function(x){return x.id==='admin1';})){
+    a.push({id:'admin1',email:'admin@chitatann.ht',pass:'chita2024',nom:'Admin Principal',createdAt:new Date().toISOString()});
+    localStorage.setItem('ct_admins',JSON.stringify(a));
+  }
+  window.dbOK=true;
+  document.dispatchEvent(new Event('dbOK'));
+})();
+</script>
+<style>
+:root{--bl:#0047AB;--bld:#00307A;--go:#F59E0B;--gr:#16A34A;--rd:#DC2626;--wh:#fff;--gy:#64748b;--bg:#f8fafc;--tx:#0F172A;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--tx);}
+nav{position:fixed;top:0;left:0;right:0;z-index:999;background:rgba(0,30,80,0.97);height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 1rem;}
+.logo{cursor:pointer;display:flex;align-items:center;gap:.4rem;}
+.logo img{height:36px;}
+.nlinks{display:flex;gap:.1rem;list-style:none;}
+.nlinks a{color:rgba(255,255,255,.75);text-decoration:none;font-size:.78rem;font-weight:600;padding:.3rem .55rem;border-radius:6px;cursor:pointer;}
+.nlinks a:hover,.nlinks a.on{color:#fff;background:rgba(255,255,255,.12);}
+.nlinks a.on{color:var(--go);}
+.nright{display:flex;gap:.4rem;align-items:center;}
+.bwa{background:#25D366;color:#fff;border:none;padding:.35rem .8rem;border-radius:20px;font-weight:700;font-size:.75rem;cursor:pointer;text-decoration:none;display:flex;align-items:center;gap:.3rem;}
+.blog{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);padding:.35rem .8rem;border-radius:20px;font-weight:700;font-size:.75rem;cursor:pointer;font-family:"DM Sans",sans-serif;}
+.blog.red{background:var(--rd);border-color:var(--rd);}
+.ham{display:none;flex-direction:column;gap:4px;cursor:pointer;}
+.ham span{width:20px;height:2px;background:#fff;border-radius:2px;}
+.page{display:none;padding-top:58px;min-height:100vh;}
+.page.on{display:block;}
+.hero{background:linear-gradient(145deg,#00307A,#0047AB 55%,#1565C0);padding:2.5rem 1.2rem 2rem;text-align:center;}
+.hero img{height:90px;margin-bottom:.8rem;filter:drop-shadow(0 4px 12px rgba(0,0,0,.3));}
+.htag{display:inline-block;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.4);color:var(--go);padding:.25rem .8rem;border-radius:20px;font-size:.72rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:1rem;}
+.hero h1{font-family:"Barlow Condensed",sans-serif;font-size:clamp(2rem,8vw,4rem);font-weight:900;color:#fff;line-height:.95;text-transform:uppercase;margin-bottom:.8rem;}
+.hero h1 em{font-style:normal;color:var(--go);display:block;}
+.hdesc{color:rgba(255,255,255,.8);font-size:.9rem;max-width:380px;margin:0 auto 1.5rem;line-height:1.6;}
+.hbtns{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;}
+.bgo{background:var(--go);color:#1a1a1a;border:none;padding:.75rem 1.4rem;border-radius:8px;font-weight:700;font-size:.88rem;cursor:pointer;font-family:"DM Sans",sans-serif;}
+.bwh{background:transparent;color:#fff;border:2px solid rgba(255,255,255,.4);padding:.75rem 1.4rem;border-radius:8px;font-weight:700;font-size:.88rem;cursor:pointer;font-family:"DM Sans",sans-serif;}
+.hstats{display:flex;justify-content:center;gap:2rem;margin-top:2rem;padding-top:1.5rem;border-top:1px solid rgba(255,255,255,.1);flex-wrap:wrap;}
+.hnum{font-family:"Barlow Condensed",sans-serif;font-size:1.8rem;font-weight:900;color:var(--go);}
+.hlbl{font-size:.72rem;color:rgba(255,255,255,.6);}
+.sec{padding:2.5rem 1.2rem;max-width:960px;margin:0 auto;}
+.slbl{font-size:.7rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--bl);margin-bottom:.3rem;}
+.stit{font-family:"Barlow Condensed",sans-serif;font-size:1.7rem;font-weight:900;color:var(--tx);text-transform:uppercase;margin-bottom:.3rem;}
+.ssub{color:var(--gy);margin-bottom:1.8rem;font-size:.88rem;}
+.g3{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.9rem;}
+.card{background:#fff;border-radius:12px;padding:1.3rem;border:1px solid #e2e8f0;}
+.card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,71,171,.1);}
+.ci{font-size:1.6rem;margin-bottom:.5rem;}
+.ct{font-weight:700;font-size:.9rem;color:var(--bld);margin-bottom:.2rem;}
+.cx{color:var(--gy);font-size:.82rem;line-height:1.5;}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-top:1.5rem;}
+.pc{border-radius:14px;padding:1.8rem;color:#fff;cursor:pointer;}
+.pc:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(0,0,0,.2);}
+.pc.adm{background:linear-gradient(135deg,#00307A,#0047AB);}
+.pc.agt{background:linear-gradient(135deg,#065F46,#16A34A);}
+.pc.cli{background:linear-gradient(135deg,#92400E,#F59E0B);color:#1a1a1a;}
+.pi{font-size:2.2rem;margin-bottom:.8rem;}
+.pt{font-family:"Barlow Condensed",sans-serif;font-size:1.4rem;font-weight:900;text-transform:uppercase;}
+.pd{font-size:.82rem;opacity:.85;margin-top:.2rem;}
+.sbg{background:#E8F0FE;padding:2rem 1.2rem;}
+.si{max-width:760px;margin:0 auto;text-align:center;}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1rem;margin-top:1.2rem;}
+.sn{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:"Barlow Condensed",sans-serif;font-size:1.2rem;font-weight:900;margin:0 auto .5rem;}
+.cta{background:var(--bld);padding:2rem 1.2rem;text-align:center;}
+.fw{max-width:640px;margin:0 auto;padding:2rem 1.2rem;}
+.fc{background:#fff;border-radius:14px;padding:1.6rem;border:1px solid #e2e8f0;}
+.ft{font-family:"Barlow Condensed",sans-serif;font-size:1.1rem;font-weight:900;color:var(--bld);text-transform:uppercase;margin-bottom:.9rem;padding-bottom:.7rem;border-bottom:2px solid #E8F0FE;}
+.fr2{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;}
+.fg{margin-bottom:.75rem;}
+.fg label{display:block;font-size:.73rem;font-weight:700;color:var(--bld);margin-bottom:.25rem;text-transform:uppercase;}
+.fg input,.fg select,.fg textarea{width:100%;padding:.65rem .8rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.88rem;font-family:"DM Sans",sans-serif;color:var(--tx);}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--bl);}
+.dvd{height:1px;background:#E8F0FE;margin:1rem 0;}
+.bsub{width:100%;background:#25D366;color:#fff;border:none;padding:.85rem;border-radius:10px;font-weight:700;font-size:.9rem;cursor:pointer;font-family:"DM Sans",sans-serif;display:flex;align-items:center;justify-content:center;gap:.4rem;}
+.bbl{background:var(--bl);color:#fff;border:none;padding:.6rem 1.2rem;border-radius:8px;font-weight:700;cursor:pointer;font-family:"DM Sans",sans-serif;font-size:.85rem;}
+.brd{background:var(--rd);color:#fff;border:none;padding:.45rem .9rem;border-radius:6px;font-weight:700;cursor:pointer;font-family:"DM Sans",sans-serif;font-size:.8rem;}
+.bgr{background:var(--gr);color:#fff;border:none;padding:.45rem .9rem;border-radius:6px;font-weight:700;cursor:pointer;font-family:"DM Sans",sans-serif;font-size:.8rem;}
+.bgo2{background:var(--go);color:#1a1a1a;border:none;padding:.45rem .9rem;border-radius:6px;font-weight:700;cursor:pointer;font-family:"DM Sans",sans-serif;font-size:.8rem;}
+.al{padding:.7rem 1rem;border-radius:8px;font-size:.83rem;font-weight:600;margin-bottom:.7rem;display:none;}
+.ok{background:#DCFCE7;color:#166534;display:block;}
+.er{background:#FEE2E2;color:#991B1B;display:block;}
+.ph{background:linear-gradient(135deg,var(--bld),var(--bl));padding:1.8rem 1.2rem;color:#fff;text-align:center;}
+.ph h2{font-family:"Barlow Condensed",sans-serif;font-size:1.7rem;font-weight:900;text-transform:uppercase;}
+.ph p{opacity:.75;font-size:.85rem;margin-top:.3rem;}
+.pw{max-width:860px;margin:0 auto;padding:2rem 1.2rem;}
+.calc{background:#E8F0FE;border-radius:12px;padding:1.5rem;margin-bottom:1.5rem;}
+.pd2{background:var(--bld);color:#fff;border-radius:10px;padding:1.3rem;text-align:center;margin-top:1rem;display:none;}
+.pb{font-family:"Barlow Condensed",sans-serif;font-size:2.8rem;font-weight:900;color:var(--go);}
+.ttbl{background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0;}
+.ttbl table{width:100%;border-collapse:collapse;}
+.ttbl th{background:var(--bld);color:#fff;padding:.65rem .9rem;text-align:left;font-size:.74rem;text-transform:uppercase;}
+.ttbl td{padding:.65rem .9rem;border-bottom:1px solid #f1f5f9;font-size:.85rem;}
+.ttbl tr:last-child td{border-bottom:none;}
+.pc2{font-weight:700;color:var(--bl);}
+.bxw{max-width:960px;margin:0 auto;padding:2rem 1.2rem;}
+.bxg{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:.9rem;}
+.bxc{background:#fff;border:2px solid #e2e8f0;border-radius:12px;padding:1.2rem;}
+.bxf{display:inline-block;background:var(--bl);color:#fff;font-size:.62rem;font-weight:700;padding:.18rem .45rem;border-radius:4px;margin-bottom:.5rem;}
+.bxv{font-family:"Barlow Condensed",sans-serif;font-size:1.1rem;font-weight:700;color:var(--bld);text-transform:uppercase;margin-bottom:.5rem;}
+.bxr{display:flex;gap:.4rem;margin-bottom:.3rem;font-size:.82rem;color:var(--gy);}
+.th{background:linear-gradient(135deg,var(--bld),var(--bl));padding:2rem 1.2rem;text-align:center;color:#fff;}
+.th h2{font-family:"Barlow Condensed",sans-serif;font-size:1.7rem;font-weight:900;text-transform:uppercase;}
+.tbar{display:flex;gap:.4rem;max-width:440px;margin:.9rem auto 0;}
+.tbar input{flex:1;padding:.75rem .9rem;border-radius:8px;border:none;font-size:.88rem;font-family:"DM Sans",sans-serif;text-transform:uppercase;}
+.tres{max-width:500px;margin:1.2rem auto 0;background:rgba(255,255,255,.1);border-radius:10px;padding:1.2rem;display:none;text-align:left;}
+.ctw{max-width:860px;margin:0 auto;padding:2rem 1.2rem;}
+.ctg{display:grid;grid-template-columns:1fr 1.4fr;gap:1.5rem;align-items:start;}
+.ctb{background:var(--bld);border-radius:14px;padding:1.6rem;color:#fff;}
+.ctb h3{font-family:"Barlow Condensed",sans-serif;font-size:1.2rem;font-weight:900;text-transform:uppercase;color:var(--go);margin-bottom:1rem;}
+.cti{display:flex;gap:.7rem;margin-bottom:.9rem;}
+.ctic{font-size:1.1rem;flex-shrink:0;}
+.ctix{font-size:.84rem;line-height:1.5;opacity:.9;}
+.ctix strong{display:block;color:#fff;}
+.wab{display:flex;align-items:center;justify-content:center;gap:.4rem;background:#25D366;color:#fff;text-decoration:none;padding:.8rem 1.2rem;border-radius:10px;font-weight:700;margin-top:1.2rem;font-size:.88rem;}
+.panel{background:var(--bg);min-height:calc(100vh - 58px);padding:1.3rem;}
+.ph2{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem;flex-wrap:wrap;gap:.6rem;}
+.ptit{font-family:"Barlow Condensed",sans-serif;font-size:1.5rem;font-weight:900;color:var(--bld);text-transform:uppercase;}
+.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.9rem;margin-bottom:1.2rem;}
+.sc{background:#fff;border-radius:10px;padding:1.1rem;border-left:4px solid var(--bl);}
+.sc.g{border-color:var(--gr);}
+.sc.o{border-color:#EA580C;}
+.sc.r{border-color:var(--rd);}
+.sn2{font-family:"Barlow Condensed",sans-serif;font-size:1.9rem;font-weight:900;color:var(--bld);}
+.sc.g .sn2{color:var(--gr);}
+.sc.o .sn2{color:#EA580C;}
+.sc.r .sn2{color:var(--rd);}
+.sl{font-size:.77rem;color:var(--gy);}
+.tbox{background:#fff;border-radius:12px;padding:1.2rem;overflow-x:auto;margin-bottom:1rem;}
+.tbox h3{font-weight:700;margin-bottom:.9rem;color:var(--bld);font-size:.9rem;}
+table{width:100%;border-collapse:collapse;font-size:.82rem;}
+th{text-align:left;padding:.6rem .8rem;background:#E8F0FE;color:var(--bld);font-weight:700;font-size:.72rem;text-transform:uppercase;}
+td{padding:.6rem .8rem;border-bottom:1px solid #f1f5f9;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#f8fafc;}
+.badge{display:inline-block;padding:.18rem .55rem;border-radius:20px;font-size:.7rem;font-weight:700;}
+.badge.pending{background:#FEF3C7;color:#92400E;}
+.badge.assigned{background:#EDE9FE;color:#5B21B6;}
+.badge.transit{background:#DBEAFE;color:#1E40AF;}
+.badge.delivered{background:#DCFCE7;color:#166534;}
+.badge.cancelled{background:#FEE2E2;color:#991B1B;}
+.lbox{max-width:370px;margin:2.5rem auto;background:#fff;border-radius:14px;padding:1.8rem;border:1px solid #e2e8f0;}
+.lbox h3{font-family:"Barlow Condensed",sans-serif;font-size:1.4rem;font-weight:900;color:var(--bld);text-transform:uppercase;margin-bottom:1.1rem;}
+.ltabs{display:flex;gap:.4rem;margin-bottom:1rem;}
+.ltab{flex:1;padding:.5rem;border:2px solid #e2e8f0;border-radius:8px;background:#fff;cursor:pointer;font-weight:700;font-family:"DM Sans",sans-serif;font-size:.82rem;}
+.ltab.on{background:var(--bl);color:#fff;border-color:var(--bl);}
+.bfull{width:100%;padding:.8rem;background:var(--bl);color:#fff;border:none;border-radius:8px;font-weight:700;font-size:.9rem;cursor:pointer;margin-top:.7rem;font-family:"DM Sans",sans-serif;}
+.mov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:none;align-items:center;justify-content:center;padding:1rem;}
+.mov.on{display:flex;}
+.mo{background:#fff;border-radius:14px;padding:1.6rem;width:100%;max-width:390px;max-height:90vh;overflow-y:auto;}
+.mo h3{font-family:"Barlow Condensed",sans-serif;font-size:1.3rem;font-weight:900;color:var(--bld);text-transform:uppercase;margin-bottom:1rem;}
+.moc{float:right;background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--gy);}
+.mm{display:none;position:fixed;top:58px;left:0;right:0;background:rgba(0,30,80,.98);z-index:998;padding:.7rem;flex-direction:column;gap:.2rem;}
+.mm.on{display:flex;}
+.mm a{color:rgba(255,255,255,.8);text-decoration:none;padding:.6rem .9rem;border-radius:8px;font-weight:600;font-size:.88rem;cursor:pointer;}
+.mm a:hover{background:rgba(255,255,255,.1);color:#fff;}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .8s linear infinite;vertical-align:middle;margin-right:5px;}
+@keyframes sp{to{transform:rotate(360deg);}}
+footer{background:#00194A;color:rgba(255,255,255,.55);text-align:center;padding:1.5rem;font-size:.8rem;}
+footer strong{color:var(--go);}
+.fl{display:flex;justify-content:center;gap:1rem;margin-bottom:.6rem;flex-wrap:wrap;}
+.fl a{color:rgba(255,255,255,.45);text-decoration:none;font-size:.75rem;cursor:pointer;}
+@media(max-width:620px){.ctg,.fr2{grid-template-columns:1fr;}.nlinks{display:none;}.ham{display:flex;}}
+@media print{nav,.mm,footer,.noprint{display:none!important;}body{background:#fff;}}
+</style>
+</head>
+<body>
+<nav>
+<div class="logo" onclick="go('home')"><img src="data:image/webp;base64,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" alt="Chita Tann"/></div>
+<ul class="nlinks">
+<li><a onclick="go('home')" id="n-home" class="on">🏠 Akèy</a></li>
+<li><a onclick="go('tracking')" id="n-tracking">🔍 Swivi</a></li>
+<li><a onclick="go('commande')" id="n-commande">📦 Kòmand</a></li>
+<li><a onclick="go('prix')" id="n-prix">💰 Pri</a></li>
+<li><a onclick="go('bureaux')" id="n-bureaux">🏢 Biwo</a></li>
+<li><a onclick="go('contact')" id="n-contact">📞 Kontakt</a></li>
+</ul>
+<div class="nright">
+<a class="bwa" href="https://wa.me/50933633544" target="_blank">📱 WhatsApp</a>
+<button class="blog" id="btnLogin" onclick="openLogin()">🔐 Konekte</button>
+<button class="blog red" id="btnLogout" style="display:none" onclick="doLogout()">Dekonekte</button>
+<div class="ham" onclick="toggleMenu()"><span></span><span></span><span></span></div>
+</div>
+</nav>
+<div class="mm" id="mm">
+<a onclick="go('home');closeMenu()">🏠 Akèy</a>
+<a onclick="go('tracking');closeMenu()">🔍 Swivi Kolis</a>
+<a onclick="go('commande');closeMenu()">📦 Pase Kòmand</a>
+<a onclick="go('prix');closeMenu()">💰 Pri</a>
+<a onclick="go('bureaux');closeMenu()">🏢 Biwo</a>
+<a onclick="go('contact');closeMenu()">📞 Kontakt</a>
+<a onclick="openLogin();closeMenu()">🔐 Konekte</a>
+</div>
+<!-- HOME -->
+<div id="home" class="page on">
+<div class="hero">
+<img src="data:image/webp;base64,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" alt="Chita Tann"/>
+<div class="htag">🇭🇹 Livrezon #1 ann Ayiti</div>
+<h1>Chita Tann<em>Nou Livré Pou Ou</em></h1>
+<p class="hdesc">Sèvis livrezon rapid, serye, ak abòdab nan tout 10 depatman Ayiti.</p>
+<div class="hbtns">
+<button class="bgo" onclick="go('commande')">📦 Pase Kòmand</button>
+<button class="bwh" onclick="go('tracking')">🔍 Swivi Kolis</button>
+</div>
+<div class="hstats">
+<div><div class="hnum">10</div><div class="hlbl">Depatman</div></div>
+<div><div class="hnum">24h</div><div class="hlbl">Ekspres</div></div>
+<div><div class="hnum">100%</div><div class="hlbl">Swivi garanti</div></div>
+</div>
+</div>
+<div class="sec">
+<div class="slbl">Espas Travay</div>
+<div class="stit">Chwazi Wòl Ou</div>
+<p class="ssub">Konekte nan espas ki fèt pou ou</p>
+<div class="pgrid">
+<div class="pc adm" onclick="openLogin('admin')"><div class="pi">👑</div><div class="pt">Admin</div><div class="pd">Kontwole tout sistèm lan</div></div>
+<div class="pc agt" onclick="openLogin('agent')"><div class="pi">🚴</div><div class="pt">Ajan / Livrè</div><div class="pd">Jere livrezon pa ou yo</div></div>
+<div class="pc cli" onclick="openLogin('client')"><div class="pi">📦</div><div class="pt">Kliyan</div><div class="pd">Pase kòmand, swivi kolis</div></div>
+</div>
+</div>
+<div class="sec" style="padding-top:0">
+<div class="slbl">Poukisa Chita Tann?</div>
+<div class="stit">Sèvis Ou Ka Fè Konfyans</div>
+<div class="g3">
+<div class="card"><div class="ci">⚡</div><div class="ct">Rapid &amp; Ponktiyèl</div><div class="cx">Livrezon 24-72h toujou.</div></div>
+<div class="card"><div class="ci">🔒</div><div class="ct">Sekirize 100%</div><div class="cx">Chak kolis ak nimewo swivi.</div></div>
+<div class="card"><div class="ci">💰</div><div class="ct">Pri Klè</div><div class="cx">Pa gen sipriz nan pri.</div></div>
+<div class="card"><div class="ci">🗺️</div><div class="ct">Tout Peyi a</div><div class="cx">Biwo nan tout 10 depatman.</div></div>
+<div class="card"><div class="ci">📱</div><div class="ct">WhatsApp 24/7</div><div class="cx">Repon rapid nenpòt ki lè.</div></div>
+<div class="card"><div class="ci">🤝</div><div class="ct">Ajan Lokal</div><div class="cx">Yon moun reyèl chak vil.</div></div>
+</div>
+</div>
+<div class="sbg"><div class="si">
+<div class="stit">4 Etap Senp</div>
+<div class="sgrid">
+<div><div class="sn" style="background:var(--bl);color:#fff">1</div><div style="font-weight:700;font-size:.87rem;color:var(--bld)">Kontakte Nou</div></div>
+<div><div class="sn" style="background:var(--bl);color:#fff">2</div><div style="font-weight:700;font-size:.87rem;color:var(--bld)">Depoze Kolis</div></div>
+<div><div class="sn" style="background:var(--bl);color:#fff">3</div><div style="font-weight:700;font-size:.87rem;color:var(--bld)">Swivi Kolis</div></div>
+<div><div class="sn" style="background:var(--go);color:#fff">4</div><div style="font-weight:700;font-size:.87rem;color:var(--bld)">Resevwa Kolis</div></div>
+</div>
+</div></div>
+<div class="cta">
+<div style="font-family:'Barlow Condensed',sans-serif;font-size:1.7rem;font-weight:900;color:#fff;text-transform:uppercase;margin-bottom:.4rem">Prèt pou Kòmanse?</div>
+<p style="color:rgba(255,255,255,.7);margin-bottom:1.2rem;font-size:.88rem">Kontakte nou — repon nan 5 minit</p>
+<a class="bwa" href="https://wa.me/50933633544?text=Bonjou%20Chita%20Tann!" target="_blank" style="display:inline-flex;font-size:.9rem;padding:.7rem 1.6rem">📱 Ekri Nou sou WhatsApp</a>
+</div>
+<footer><div class="fl"><a onclick="go('home')">Akèy</a><a onclick="go('tracking')">Swivi</a><a onclick="go('prix')">Tarif</a><a onclick="go('bureaux')">Biwo</a><a onclick="go('contact')">Kontakt</a></div><p>© 2024 <strong>Chita Tann</strong> — Livrezon Rapid ann Ayiti 🇭🇹</p></footer>
+</div>
+<!-- TRACKING -->
+<div id="tracking" class="page">
+<div class="th"><h2>🔍 Swivi Kolis Ou</h2><p>Antre nimewo swivi pou wè kote kolis ou ye</p>
+<div class="tbar"><input type="text" id="tInp" placeholder="EX: CT-001234" oninput="this.value=this.value.toUpperCase()"/><button class="bgo" onclick="doTrack()">Chèche</button></div>
+<div class="tres" id="tRes"></div>
+</div>
+<div style="text-align:center;padding:2rem"><a href="https://wa.me/50933633544?text=Bonjou!%20Mwen%20vle%20swivi%20kolis%20mwen." target="_blank" class="bwa" style="display:inline-flex">📱 Kontakte sou WhatsApp</a></div>
+<footer><p>© 2024 <strong>Chita Tann</strong> 🇭🇹</p></footer>
+</div>
+
+<!-- COMMANDE -->
+<div id="commande" class="page">
+<div class="fw">
+<div class="slbl">Pase Kòmand</div><div class="stit">📦 Voye Yon Kolis</div>
+<div id="cmdAl" class="al"></div>
+<div class="fc">
+<div class="ft">👤 Ekspediè</div>
+<div class="fr2">
+<div class="fg"><label>Non Konplè *</label><input type="text" id="cNE" placeholder="Non ou"/></div>
+<div class="fg"><label>Telefòn *</label><input type="tel" id="cTE" placeholder="+509 xxxx-xxxx"/></div>
+</div>
+<div class="fg"><label>Vil Depa *</label><select id="cVD"><option value="">Chwazi vil...</option><option>Port-au-Prince</option><option>Cap-Haïtien</option><option>Gonaïves</option><option>Les Cayes</option><option>Saint-Marc</option><option>Jacmel</option><option>Jérémie</option><option>Miragoâne</option><option>Hinche</option><option>Fort-Liberté</option></select></div>
+<div class="dvd"></div>
+<div class="ft">📍 Destinatè</div>
+<div class="fr2">
+<div class="fg"><label>Non Konplè *</label><input type="text" id="cND" placeholder="Non destinatè"/></div>
+<div class="fg"><label>Telefòn *</label><input type="tel" id="cTD" placeholder="+509 xxxx-xxxx"/></div>
+</div>
+<div class="fr2">
+<div class="fg"><label>Vil Destinasyon *</label><select id="cVDst"><option value="">Chwazi vil...</option><option>Port-au-Prince</option><option>Cap-Haïtien</option><option>Gonaïves</option><option>Les Cayes</option><option>Saint-Marc</option><option>Jacmel</option><option>Jérémie</option><option>Miragoâne</option><option>Hinche</option><option>Fort-Liberté</option></select></div>
+<div class="fg"><label>Adrès</label><input type="text" id="cAD" placeholder="Riyèl, katye..."/></div>
+</div>
+<div class="dvd"></div>
+<div class="ft">📦 Detay Kolis</div>
+<div class="fr2">
+<div class="fg"><label>Tip Kolis</label><select id="cTK"><option value="">Chwazi...</option><option>Dokiman</option><option>Vêtman</option><option>Elektwonik</option><option>Manje</option><option>Medikaman</option><option>Lajan</option><option>Lòt</option></select></div>
+<div class="fg"><label>Pwa (kg)</label><input type="number" id="cPW" placeholder="Ex: 2.5" min="0.1" step="0.1"/></div>
+</div>
+<div class="fg"><label>Nòt</label><textarea id="cNT" rows="2" placeholder="Enfòmasyon enpòtan..."></textarea></div>
+<button class="bsub" id="cmdBtn" onclick="envoyeKomand()">📦 Voye Kòmand via WhatsApp</button>
+<p style="text-align:center;font-size:.75rem;color:var(--gy);margin-top:.5rem">🔒 Kòmand anrejistre + voye WhatsApp</p>
+</div></div>
+<footer><p>© 2024 <strong>Chita Tann</strong> 🇭🇹</p></footer>
+</div>
+
+<!-- PRIX -->
+<div id="prix" class="page">
+<div class="pw">
+<div class="stit">💰 Pri Livrezon</div>
+<div class="calc">
+<div class="fr2">
+<div class="fg"><label>Vil Depa</label><select id="pD"><option value="">Chwazi...</option><option>Port-au-Prince</option><option>Cap-Haïtien</option><option>Gonaïves</option><option>Les Cayes</option><option>Saint-Marc</option><option>Jacmel</option></select></div>
+<div class="fg"><label>Destinasyon</label><select id="pDst"><option value="">Chwazi...</option><option>Port-au-Prince</option><option>Cap-Haïtien</option><option>Gonaïves</option><option>Les Cayes</option><option>Saint-Marc</option><option>Jacmel</option></select></div>
+</div>
+<div class="fg"><label>Pwa (kg)</label><input type="number" id="pPW" placeholder="Ex: 3" min="0.1" step="0.1" style="max-width:180px"/></div>
+<button class="bbl" onclick="calcPrix()">Kalkile →</button>
+<div class="pd2" id="pDisp"><div style="font-size:.78rem;opacity:.7;margin-bottom:.2rem">Estimasyon</div><div class="pb" id="pBig">0 HTG</div><div style="font-size:.78rem;opacity:.7;margin-top:.2rem" id="pSub"></div><div style="margin-top:.9rem"><a id="pWA" href="#" target="_blank" class="bwa" style="display:inline-flex">📱 Pase Kòmand</a></div></div>
+</div>
+<div class="stit" style="font-size:1.2rem;margin-bottom:.7rem">Tablo Tarif</div>
+<div class="ttbl"><table><thead><tr><th>Trajet</th><th>0–1 kg</th><th>1–5 kg</th><th>5–10 kg</th><th>+10 kg</th></tr></thead><tbody>
+<tr><td>PAP ↔ Cap-Haïtien</td><td class="pc2">500 HTG</td><td class="pc2">800 HTG</td><td class="pc2">1,200 HTG</td><td class="pc2">+100/kg</td></tr>
+<tr><td>PAP ↔ Gonaïves</td><td class="pc2">400 HTG</td><td class="pc2">650 HTG</td><td class="pc2">1,000 HTG</td><td class="pc2">+80/kg</td></tr>
+<tr><td>PAP ↔ Les Cayes</td><td class="pc2">450 HTG</td><td class="pc2">700 HTG</td><td class="pc2">1,100 HTG</td><td class="pc2">+90/kg</td></tr>
+<tr><td>PAP ↔ Jacmel</td><td class="pc2">300 HTG</td><td class="pc2">500 HTG</td><td class="pc2">800 HTG</td><td class="pc2">+70/kg</td></tr>
+<tr><td>PAP ↔ Saint-Marc</td><td class="pc2">350 HTG</td><td class="pc2">550 HTG</td><td class="pc2">900 HTG</td><td class="pc2">+75/kg</td></tr>
+</tbody></table></div>
+<p style="color:var(--gy);font-size:.75rem;margin-top:.5rem">* Pri final deziye pa ajan apre akseptasyon.</p>
+</div>
+<footer><p>© 2024 <strong>Chita Tann</strong> 🇭🇹</p></footer>
+</div>
+
+<!-- BUREAUX -->
+<div id="bureaux" class="page">
+<div class="ph"><h2>🏢 Biwo Nou Yo</h2><p>Jwenn biwo Chita Tann nan tout Ayiti</p></div>
+<div class="bxw"><div class="bxg" id="bxGrid"><p style="color:var(--gy);text-align:center">Ap chaje...</p></div></div>
+<footer><p>© 2024 <strong>Chita Tann</strong> 🇭🇹</p></footer>
+</div>
+
+<!-- CONTACT -->
+<div id="contact" class="page">
+<div class="ph"><h2>📞 Kontakte Nou</h2><p>Nou la 7j/7</p></div>
+<div class="ctw"><div class="ctg">
+<div><div class="ctb"><h3>📋 Enfòmasyon</h3>
+<div class="cti"><div class="ctic">📍</div><div class="ctix"><strong>Biwo Santral</strong>Port-au-Prince, Haïti</div></div>
+<div class="cti"><div class="ctic">📞</div><div class="ctix"><strong>WhatsApp</strong>+509 3363-3544</div></div>
+<div class="cti"><div class="ctic">📧</div><div class="ctix"><strong>Email</strong>chitatannhaiti@gmail.com</div></div>
+<div class="cti"><div class="ctic">🕐</div><div class="ctix"><strong>Orè</strong>Lendi–Samdi: 7h–18h</div></div>
+<a href="https://wa.me/50933633544?text=Bonjou%20Chita%20Tann!" target="_blank" class="wab">📱 Ekri sou WhatsApp Kounye a</a>
+</div></div>
+<div><div class="fc"><div class="ft">✉️ Voye Mesaj</div>
+<div id="ctAl" class="al"></div>
+<div class="fg"><label>Non *</label><input type="text" id="ctN" placeholder="Non ou"/></div>
+<div class="fg"><label>Telefòn</label><input type="tel" id="ctT" placeholder="+509 xxxx-xxxx"/></div>
+<div class="fg"><label>Mesaj *</label><textarea id="ctM" rows="4" placeholder="Kijan nou ka ede ou?"></textarea></div>
+<button class="bsub" onclick="envoyeContact()">📱 Voye via WhatsApp</button>
+</div></div>
+</div></div>
+<footer><p>© 2024 <strong>Chita Tann</strong> 🇭🇹</p></footer>
+</div>
+
+<!-- ADMIN -->
+<div id="admin" class="page"><div class="panel" id="adminContent"></div></div>
+<!-- AGENT -->
+<div id="agent" class="page"><div class="panel" id="agentContent"></div></div>
+<!-- CLIENT -->
+<div id="client" class="page"><div class="panel" id="clientContent"></div></div>
+<!-- MODALS -->
+<div class="mov" id="mLogin">
+<div class="mo"><button class="moc" onclick="closeMo('mLogin')">✕</button><h3>🔐 Konekte</h3>
+<div class="ltabs"><button class="ltab on" id="tabA" onclick="swLogin('admin')">👑 Admin</button><button class="ltab" id="tabG" onclick="swLogin('agent')">🚴 Ajan</button><button class="ltab" id="tabC" onclick="swLogin('client')">📦 Kliyan</button></div>
+<div id="fAdmin"><div id="alAdmin" class="al"></div>
+<div class="fg"><label>Email</label><input type="email" id="aEmail" placeholder="admin@chitatann.ht"/></div>
+<div class="fg"><label>Modpas</label><input type="password" id="aPass" placeholder="Modpas"/></div>
+<button class="bfull" onclick="loginAdmin()">Konekte kòm Admin</button></div>
+<div id="fAgent" style="display:none"><div id="alAgent" class="al"></div>
+<div class="fg"><label>Kòd Ajan</label><input type="text" id="gCode" placeholder="Kòd ajan ou"/></div>
+<div class="fg"><label>Modpas</label><input type="password" id="gPass" placeholder="Modpas"/></div>
+<button class="bfull" onclick="loginAgent()">Konekte kòm Ajan</button></div>
+<div id="fClient" style="display:none"><div id="alClient" class="al"></div>
+<div class="ltabs" style="margin-bottom:.9rem"><button class="ltab on" id="cTabL" onclick="swClient('login')">Konekte</button><button class="ltab" id="cTabR" onclick="swClient('reg')">Enskri</button></div>
+<div id="fCLogin">
+<div class="fg"><label>Nimewo Telefòn</label><input type="tel" id="cTel" placeholder="+509 xxxx-xxxx"/></div>
+<div class="fg"><label>Modpas</label><input type="password" id="cPass" placeholder="Modpas"/></div>
+<button class="bfull" onclick="loginClient()">Konekte</button></div>
+<div id="fCReg" style="display:none">
+<div class="fg"><label>Non Konplè *</label><input type="text" id="rNom" placeholder="Non ou"/></div>
+<div class="fg"><label>Nimewo Telefòn *</label><input type="tel" id="rTel" placeholder="+509 xxxx-xxxx"/></div>
+<div class="fg"><label>Vil</label><select id="rVil"><option value="">Chwazi...</option><option>Port-au-Prince</option><option>Cap-Haïtien</option><option>Gonaïves</option><option>Les Cayes</option><option>Saint-Marc</option><option>Jacmel</option></select></div>
+<div class="fg"><label>Modpas *</label><input type="password" id="rPass" placeholder="Minimòm 4 karaktè"/></div>
+<button class="bfull" onclick="regClient()">Enskri</button></div>
+</div></div>
+</div>
+
+<div class="mov" id="mAgent">
+<div class="mo"><button class="moc" onclick="closeMo('mAgent')">✕</button><h3>➕ Ajoute Ajan</h3>
+<div id="alAddAgent" class="al"></div>
+<div class="fg"><label>Non Konplè *</label><input type="text" id="aNom" placeholder="Non ajan"/></div>
+<div class="fg"><label>Kòd / Username *</label><input type="text" id="aCode2" placeholder="Ex: jean.pierre"/></div>
+<div class="fg"><label>Telefòn</label><input type="tel" id="aTel" placeholder="+509 xxxx-xxxx"/></div>
+<div class="fg"><label>Vil</label><select id="aVil"><option value="">Chwazi...</option><option>Port-au-Prince</option><option>Cap-Haïtien</option><option>Gonaïves</option><option>Les Cayes</option><option>Saint-Marc</option><option>Jacmel</option><option>Jérémie</option><option>Miragoâne</option><option>Hinche</option><option>Fort-Liberté</option></select></div>
+<div class="fg"><label>Modpas *</label><input type="password" id="aPass2" placeholder="Modpas ajan"/></div>
+<div class="fg"><label>% Komisyon (default 15)</label><input type="number" id="aKom" placeholder="15" min="0" max="100" value="15"/></div>
+<button class="bfull" onclick="addAgent()">Ajoute Ajan</button></div>
+</div>
+
+<div class="mov" id="mBureau">
+<div class="mo"><button class="moc" onclick="closeMo('mBureau')">✕</button><h3>🏢 Ajoute Biwo</h3>
+<div id="alAddBureau" class="al"></div>
+<div class="fg"><label>Vil *</label><input type="text" id="bVil" placeholder="Ex: Miragoâne"/></div>
+<div class="fg"><label>Depatman</label><input type="text" id="bDep" placeholder="Ex: Nippes"/></div>
+<div class="fg"><label>Adrès</label><input type="text" id="bAdr" placeholder="Adrès konplè"/></div>
+<div class="fg"><label>Telefòn</label><input type="tel" id="bTel" placeholder="+509 xxxx-xxxx"/></div>
+<div class="fg"><label>Orè</label><input type="text" id="bHor" placeholder="Ex: Lun-Sam: 8h-17h"/></div>
+<button class="bfull" onclick="addBureau()">Ajoute Biwo</button></div>
+</div>
+
+<div class="mov" id="mPrix">
+<div class="mo"><button class="moc" onclick="closeMo('mPrix')">✕</button><h3>💰 Mete Pri Kòmand</h3>
+<div id="alPrix" class="al"></div>
+<p style="font-size:.82rem;color:var(--gy);margin-bottom:.9rem" id="infoKomand"></p>
+<div class="fg"><label>Pri HTG *</label><input type="number" id="htgVal" placeholder="Ex: 800" min="0" oninput="prevKom()"/></div>
+<div class="fg"><label>Pri USD (opsyonèl)</label><input type="number" id="usdVal" placeholder="Ex: 6" min="0" step="0.01"/></div>
+<div id="komPrev" style="background:#E8F0FE;border-radius:8px;padding:.7rem;margin:.7rem 0;font-size:.82rem;display:none"><span id="komDetail"></span></div>
+<button class="bfull" onclick="savePrix()">✅ Konfime Pri</button></div>
+</div>
+<script>
+var WA='50933633544';
+var CU=null,CR=null,selKId=null,selKAgt=null;
+
+function waitDB(fn){if(window.dbOK)fn();else document.addEventListener('dbOK',fn,{once:true});}
+
+async function fsGetAll(col){
+  var s=await DB.collection(col).get();
+  return s.docs.map(function(d){var x=d.data();return Object.assign({},x,{id:d.id});});
+}
+async function fsGet(col,id){
+  var s=await DB.collection(col).doc(id).get();
+  return s.exists?Object.assign({},s.data(),{id:s.id}):null;
+}
+async function fsAdd(col,data){
+  data.createdAt=new Date().toISOString();
+  var r=await DB.collection(col).add(data);
+  return r.id;
+}
+async function fsSet(col,id,data){
+  await DB.collection(col).doc(id).set(data);
+}
+async function fsUp(col,id,data){
+  await DB.collection(col).doc(id).update(data);
+}
+async function fsDel(col,id){
+  await DB.collection(col).doc(id).delete();
+}
+async function fsQ(col,field,op,val){
+  var s=await DB.collection(col).where(field,op,val).get();
+  return s.docs.map(function(d){var x=d.data();return Object.assign({},x,{id:d.id});});
+}
+
+function go(p){
+  document.querySelectorAll('.page').forEach(function(x){x.classList.remove('on');});
+  document.getElementById(p).classList.add('on');
+  document.querySelectorAll('.nlinks a').forEach(function(a){a.classList.remove('on');});
+  var n=document.getElementById('n-'+p);
+  if(n)n.classList.add('on');
+  window.scrollTo(0,0);
+  closeMenu();
+  if(p==='bureaux')renderBureaux();
+  if(p==='admin')renderAdmin();
+  if(p==='agent')renderAgent();
+  if(p==='client')renderClient();
+}
+function toggleMenu(){document.getElementById('mm').classList.toggle('on');}
+function closeMenu(){document.getElementById('mm').classList.remove('on');}
+function openMo(id){document.getElementById(id).classList.add('on');}
+function closeMo(id){document.getElementById(id).classList.remove('on');}
+function sal(id,msg,t){
+  var e=document.getElementById(id);
+  if(!e)return;
+  e.textContent=msg;
+  e.className='al '+(t==='ok'?'ok':'er');
+  e.style.display='block';
+  setTimeout(function(){e.style.display='none';},5000);
+}
+
+function openLogin(tab){openMo('mLogin');if(tab)swLogin(tab);}
+function swLogin(t){
+  ['Admin','Agent','Client'].forEach(function(x){
+    document.getElementById('f'+x).style.display='none';
+    document.getElementById('tab'+x.charAt(0)).classList.remove('on');
+  });
+  document.getElementById('f'+t.charAt(0).toUpperCase()+t.slice(1)).style.display='block';
+  document.getElementById('tab'+t.charAt(0).toUpperCase()).classList.add('on');
+}
+function swClient(t){
+  document.getElementById('fCLogin').style.display=t==='login'?'block':'none';
+  document.getElementById('fCReg').style.display=t==='reg'?'block':'none';
+  document.getElementById('cTabL').classList.toggle('on',t==='login');
+  document.getElementById('cTabR').classList.toggle('on',t==='reg');
+}
+
+async function loginAdmin(){
+  var em=document.getElementById('aEmail').value.trim();
+  var pw=document.getElementById('aPass').value;
+  if(!em||!pw){sal('alAdmin','Antre email ak modpas.','er');return;}
+  try{
+    var list=await fsQ('admins','email','==',em);
+    var a=list.find(function(x){return x.pass===pw;});
+    if(!a){sal('alAdmin','Email oswa modpas pa kòrèk.','er');return;}
+    CU=a;CR='admin';
+    document.getElementById('btnLogout').style.display='block';
+    document.getElementById('btnLogin').style.display='none';
+    closeMo('mLogin');go('admin');
+  }catch(e){sal('alAdmin','Erè: '+e.message,'er');}
+}
+async function loginAgent(){
+  var cd=document.getElementById('gCode').value.trim();
+  var pw=document.getElementById('gPass').value;
+  if(!cd||!pw){sal('alAgent','Antre kòd ak modpas.','er');return;}
+  try{
+    var list=await fsQ('agents','code','==',cd);
+    var a=list.find(function(x){return x.pass===pw&&x.actif!==false;});
+    if(!a){sal('alAgent','Kòd oswa modpas pa kòrèk.','er');return;}
+    CU=a;CR='agent';
+    document.getElementById('btnLogout').style.display='block';
+    document.getElementById('btnLogin').style.display='none';
+    closeMo('mLogin');go('agent');
+  }catch(e){sal('alAgent','Erè: '+e.message,'er');}
+}
+async function loginClient(){
+  var tel=document.getElementById('cTel').value.trim().replace(/\s/g,'');
+  var pw=document.getElementById('cPass').value;
+  if(!tel||!pw){sal('alClient','Antre nimewo ak modpas.','er');return;}
+  try{
+    var list=await fsGetAll('clients');
+    var c=list.find(function(x){return x.tel.replace(/\s/g,'')=== tel&&x.pass===pw;});
+    if(!c){sal('alClient','Nimewo oswa modpas pa kòrèk.','er');return;}
+    CU=c;CR='client';
+    document.getElementById('btnLogout').style.display='block';
+    document.getElementById('btnLogin').style.display='none';
+    closeMo('mLogin');go('client');
+  }catch(e){sal('alClient','Erè: '+e.message,'er');}
+}
+async function regClient(){
+  var nom=document.getElementById('rNom').value.trim();
+  var tel=document.getElementById('rTel').value.trim();
+  var vil=document.getElementById('rVil').value;
+  var pw=document.getElementById('rPass').value;
+  if(!nom||!tel||!pw){sal('alClient','Ranpli tout chan * yo.','er');return;}
+  try{
+    var list=await fsGetAll('clients');
+    if(list.find(function(x){return x.tel.replace(/\s/g,'')===tel.replace(/\s/g,'');})){
+      sal('alClient','Nimewo sa deja anrejistre.','er');return;
+    }
+    var id=await fsAdd('clients',{nom:nom,tel:tel,vil:vil,pass:pw});
+    CU={id:id,nom:nom,tel:tel,vil:vil};CR='client';
+    document.getElementById('btnLogout').style.display='block';
+    document.getElementById('btnLogin').style.display='none';
+    closeMo('mLogin');go('client');
+  }catch(e){sal('alClient','Erè: '+e.message,'er');}
+}
+function doLogout(){CU=null;CR=null;document.getElementById('btnLogout').style.display='none';document.getElementById('btnLogin').style.display='block';go('home');}
+
+async function doTrack(){
+  var num=document.getElementById('tInp').value.trim().toUpperCase();
+  var res=document.getElementById('tRes');
+  if(!num){alert('Antre nimewo swivi a.');return;}
+  res.style.display='block';
+  res.innerHTML='<span class="spin"></span> Ap chèche...';
+  try{
+    var list=await fsQ('commandes','tracking','==',num);
+    if(!list.length){res.innerHTML='<p>❌ '+num+' pa jwenn. Kontakte nou sou WhatsApp.</p>';return;}
+    var k=list[0];
+    var sm={pending:'⏳ An Atant',assigned:'👤 Asiyen',transit:'🚚 En Transit',delivered:'✅ Livré',cancelled:'❌ Anile'};
+    res.innerHTML='<div style="font-size:.85rem;line-height:2">🔢 <strong>'+num+'</strong><br>📦 <strong>Estati:</strong> '+(sm[k.status]||k.status)+'<br>🚀 <strong>Depa:</strong> '+(k.vilDepa||'N/A')+'<br>🏁 <strong>Dest:</strong> '+(k.vilDest||'N/A')+'<br>👤 <strong>Destinatè:</strong> '+(k.nomDest||'N/A')+(k.priceHTG?'<br>💰 <strong>Pri:</strong> '+Number(k.priceHTG).toLocaleString()+' HTG':'')+'</div>';
+  }catch(e){res.innerHTML='<p>Erè. Eseye ankò.</p>';}
+}
+
+async function envoyeKomand(){
+  var ne=document.getElementById('cNE').value.trim();
+  var te=document.getElementById('cTE').value.trim();
+  var vd=document.getElementById('cVD').value;
+  var nd=document.getElementById('cND').value.trim();
+  var td=document.getElementById('cTD').value.trim();
+  var vdst=document.getElementById('cVDst').value;
+  var ad=document.getElementById('cAD').value.trim();
+  var tk=document.getElementById('cTK').value;
+  var pw=document.getElementById('cPW').value;
+  var nt=document.getElementById('cNT').value.trim();
+  if(!ne||!te||!vd||!nd||!td||!vdst){sal('cmdAl','Ranpli tout chan * yo.','er');return;}
+  var trk='CT-'+Date.now().toString().slice(-6);
+  var btn=document.getElementById('cmdBtn');
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span>Ap anrejistre...';
+  try{
+    var agents=await fsQ('agents','vil','==',vd);
+    var agentId=agents.length?agents[0].id:null;
+    await fsAdd('commandes',{tracking:trk,nomExp:ne,telExp:te,vilDepa:vd,nomDest:nd,telDest:td,vilDest:vdst,adresse:ad,tipKolis:tk,pwa:pw,notes:nt,status:agentId?'assigned':'pending',priceHTG:null,priceUSD:null,agentId:agentId});
+    var lines=['Bonjou Chita Tann!','Nouvo Komand: '+trk,'Ekspedye: '+ne+' / '+te+' ('+vd+')','Destinataire: '+nd+' / '+td+' ('+vdst+')','Adresse: '+(ad||'NA'),'Kolis: '+(tk||'NA')+' '+(pw?pw+'kg':''),'Not: '+(nt||'Okenn')];
+    window.open('https://wa.me/'+WA+'?text='+encodeURIComponent(lines.join('\n')),'_blank');
+    sal('cmdAl','Kòmand anrejistre! Nimewo: '+trk,'ok');
+    ['cNE','cTE','cND','cTD','cAD','cNT','cPW'].forEach(function(id){document.getElementById(id).value='';});
+    ['cVD','cVDst','cTK'].forEach(function(id){document.getElementById(id).selectedIndex=0;});
+  }catch(e){sal('cmdAl','Erè: '+e.message,'er');}
+  btn.disabled=false;btn.innerHTML='📦 Voye Kòmand via WhatsApp';
+}
+
+function calcPrix(){
+  var d=document.getElementById('pD').value;
+  var dst=document.getElementById('pDst').value;
+  var pw=parseFloat(document.getElementById('pPW').value);
+  if(!d||!dst){alert('Chwazi vil yo.');return;}
+  if(d===dst){alert('Vil yo pa ka menm.');return;}
+  if(!pw||pw<=0){alert('Antre pwa a.');return;}
+  var t={'Cap-Haïtien':[500,800,1200,100],'Gonaïves':[400,650,1000,80],'Les Cayes':[450,700,1100,90],'Jacmel':[300,500,800,70],'Saint-Marc':[350,550,900,75]};
+  var k=d==='Port-au-Prince'?dst:d;
+  var tr=t[k]||[400,650,1000,80];
+  var tot=pw<=1?tr[0]:pw<=5?tr[1]:pw<=10?tr[2]:tr[2]+(pw-10)*tr[3];
+  tot=Math.round(tot);
+  document.getElementById('pBig').textContent=tot.toLocaleString()+' HTG';
+  document.getElementById('pSub').textContent=d+' → '+dst+' | '+pw+' kg';
+  var waMsg='Bonjou Chita Tann! Komand: '+d+' vers '+dst+', '+pw+'kg. Estimasyon: '+tot+' HTG.';
+  document.getElementById('pWA').href='https://wa.me/'+WA+'?text='+encodeURIComponent(waMsg);
+  document.getElementById('pDisp').style.display='block';
+}
+
+async function renderBureaux(){
+  var grid=document.getElementById('bxGrid');
+  grid.innerHTML='<p style="color:var(--gy);text-align:center">Ap chaje...</p>';
+  try{
+    var bx=await fsGetAll('bureaux');
+    if(!bx.length){
+      var defs=[
+        {vil:'Port-au-Prince',dep:'Ouest',adr:'Rue du Centre, Bicentenaire',tel:'+509 3363-3544',hor:'Lun-Sam: 7h-18h',santral:true},
+        {vil:'Cap-Haïtien',dep:'Nord',adr:'Rue 16-17',tel:'+509 xxxx-xxxx',hor:'Lun-Sam: 8h-17h'},
+        {vil:'Gonaïves',dep:'Artibonite',adr:"Place d'Armes",tel:'+509 xxxx-xxxx',hor:'Lun-Sam: 8h-17h'},
+        {vil:'Les Cayes',dep:'Sud',adr:'Rue Fraternité',tel:'+509 xxxx-xxxx',hor:'Lun-Ven: 8h-17h'},
+        {vil:'Saint-Marc',dep:'Artibonite',adr:'Boulevard Saint-Marc',tel:'+509 xxxx-xxxx',hor:'Lun-Sam: 8h-17h'},
+        {vil:'Jacmel',dep:'Sud-Est',adr:'Place Toussaint',tel:'+509 xxxx-xxxx',hor:'Lun-Ven: 8h-16h'},
+        {vil:'Jérémie',dep:'Grand-Anse',adr:'Centre-ville',tel:'+509 xxxx-xxxx',hor:'Lun-Ven: 8h-16h'},
+        {vil:'Hinche',dep:'Centre',adr:'Centre-ville',tel:'+509 xxxx-xxxx',hor:'Lun-Ven: 8h-16h'}
+      ];
+      for(var i=0;i<defs.length;i++)await fsAdd('bureaux',defs[i]);
+      bx=await fsGetAll('bureaux');
+    }
+    grid.innerHTML=bx.map(function(b){
+      return '<div class="bxc">'+(b.santral?'<div class="bxf">SANTRAL</div>':'')+
+        '<div class="bxv">📍 '+b.vil+'</div>'+
+        (b.dep?'<div class="bxr"><span>🗺️</span><span>'+b.dep+'</span></div>':'')+
+        '<div class="bxr"><span>🏠</span><span>'+(b.adr||'N/A')+'</span></div>'+
+        '<div class="bxr"><span>📞</span><span>'+(b.tel||'N/A')+'</span></div>'+
+        '<div class="bxr"><span>🕐</span><span>'+(b.hor||'N/A')+'</span></div></div>';
+    }).join('');
+  }catch(e){grid.innerHTML='<p style="color:var(--rd)">Erè chajman.</p>';}
+}
+
+function envoyeContact(){
+  var n=document.getElementById('ctN').value.trim();
+  var t=document.getElementById('ctT').value.trim();
+  var m=document.getElementById('ctM').value.trim();
+  if(!n||!m){sal('ctAl','Antre non ou ak mesaj ou.','er');return;}
+  var msg='Mesaj Kontakt\nNon: '+n+'\nTel: '+(t||'NA')+'\nMesaj: '+m;
+  window.open('https://wa.me/'+WA+'?text='+encodeURIComponent(msg),'_blank');
+  sal('ctAl','WhatsApp ap ouvri!','ok');
+  ['ctN','ctT','ctM'].forEach(function(id){document.getElementById(id).value='';});
+}
+
+async function renderAdmin(){
+  var el=document.getElementById('adminContent');
+  if(!CU||CR!=='admin'){
+    el.innerHTML='<div class="lbox"><h3>🔐 Aksè Admin</h3><p style="color:var(--gy);margin-bottom:1rem;font-size:.88rem">Ou dwe konekte kòm admin.</p><button class="bfull" onclick="openLogin(\'admin\')">Konekte</button></div>';
+    return;
+  }
+  el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--gy)"><span class="spin"></span> Ap chaje...</div>';
+  try{
+    var ks=await fsGetAll('commandes');
+    var ags=await fsGetAll('agents');
+    var cls=await fsGetAll('clients');
+    var livres=ks.filter(function(k){return k.status==='delivered';}).length;
+    var transit=ks.filter(function(k){return k.status==='transit';}).length;
+    var pending=ks.filter(function(k){return k.status==='pending';}).length;
+    var rev=ks.filter(function(k){return k.priceHTG;}).reduce(function(s,k){return s+Number(k.priceHTG);},0);
+    var rows='';
+    ks.slice().reverse().forEach(function(k){
+      rows+='<tr><td><strong>'+k.tracking+'</strong></td><td>'+(k.nomExp||'N/A')+'</td><td>'+(k.nomDest||'N/A')+'</td><td style="font-size:.75rem">'+(k.vilDepa||'')+'→'+(k.vilDest||'')+'</td><td>'+(k.priceHTG?Number(k.priceHTG).toLocaleString()+' HTG':'<span style="color:var(--rd);font-size:.78rem">Pa mete</span>')+'</td>'+
+        '<td><select onchange="admSt(\''+k.id+'\',this.value)" style="padding:.2rem .3rem;border-radius:4px;border:1px solid #ccc;font-size:.75rem">'+
+        '<option value="pending"'+(k.status==='pending'?' selected':'')+'>⏳ Atant</option>'+
+        '<option value="assigned"'+(k.status==='assigned'?' selected':'')+'>👤 Asiyen</option>'+
+        '<option value="transit"'+(k.status==='transit'?' selected':'')+'>🚚 Transit</option>'+
+        '<option value="delivered"'+(k.status==='delivered'?' selected':'')+'>✅ Livré</option>'+
+        '<option value="cancelled"'+(k.status==='cancelled'?' selected':'')+'>❌ Anile</option>'+
+        '</select></td>'+
+        '<td style="display:flex;gap:.25rem"><button class="bgo2" onclick="openPrix(\''+k.id+'\',\''+(k.agentId||'')+'\')">💰</button><button class="brd" onclick="delK(\''+k.id+'\')">🗑️</button></td></tr>';
+    });
+    var arows='';
+    ags.forEach(function(a){
+      arows+='<tr><td><strong>'+a.nom+'</strong></td><td style="font-family:monospace">'+a.code+'</td><td>'+(a.vil||'N/A')+'</td><td>'+(a.tel||'N/A')+'</td><td>'+(a.komisyon||15)+'%</td><td><button class="brd" onclick="delA(\''+a.id+'\')">🗑️</button></td></tr>';
+    });
+    var crows='';
+    cls.forEach(function(c){
+      crows+='<tr><td>'+c.nom+'</td><td>'+c.tel+'</td><td>'+(c.vil||'N/A')+'</td></tr>';
+    });
+    el.innerHTML=
+      '<div class="ph2"><div><div class="ptit">👑 Admin — '+CU.nom+'</div></div>'+
+      '<div style="display:flex;gap:.4rem;flex-wrap:wrap"><button class="bbl" onclick="openMo(\'mAgent\')">➕ Ajan</button><button class="bbl" onclick="openMo(\'mBureau\')">🏢 Biwo</button><button class="bgo2" onclick="renderAdmin()">🔄</button></div></div>'+
+      '<div class="sg"><div class="sc"><div class="sn2">'+ks.length+'</div><div class="sl">Total Kòmand</div></div>'+
+      '<div class="sc g"><div class="sn2">'+livres+'</div><div class="sl">Livré ✅</div></div>'+
+      '<div class="sc o"><div class="sn2">'+transit+'</div><div class="sl">Transit 🚚</div></div>'+
+      '<div class="sc r"><div class="sn2">'+pending+'</div><div class="sl">Atant ⏳</div></div>'+
+      '<div class="sc"><div class="sn2">'+ags.length+'</div><div class="sl">Ajan</div></div>'+
+      '<div class="sc"><div class="sn2">'+cls.length+'</div><div class="sl">Kliyan</div></div>'+
+      '<div class="sc g"><div class="sn2">'+rev.toLocaleString()+'</div><div class="sl">Revni HTG</div></div></div>'+
+      '<div class="tbox"><h3>📦 Kòmand ('+ks.length+')</h3><table><thead><tr><th>Tracking</th><th>Ekspediè</th><th>Destinatè</th><th>Trajet</th><th>Pri</th><th>Estati</th><th>Aksyon</th></tr></thead><tbody>'+
+      (rows||'<tr><td colspan="7" style="text-align:center;color:var(--gy)">Pa gen kòmand</td></tr>')+
+      '</tbody></table></div>'+
+      '<div class="tbox"><h3>🚴 Ajan ('+ags.length+')</h3><table><thead><tr><th>Non</th><th>Kòd</th><th>Vil</th><th>Tél</th><th>Kom.</th><th>Aksyon</th></tr></thead><tbody>'+
+      (arows||'<tr><td colspan="6" style="text-align:center;color:var(--gy)">Pa gen ajan</td></tr>')+
+      '</tbody></table></div>'+
+      '<div class="tbox"><h3>👥 Kliyan ('+cls.length+')</h3><table><thead><tr><th>Non</th><th>Tél</th><th>Vil</th></tr></thead><tbody>'+
+      (crows||'<tr><td colspan="3" style="text-align:center;color:var(--gy)">Pa gen kliyan</td></tr>')+
+      '</tbody></table></div>';
+  }catch(e){el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--rd)">Erè: '+e.message+'</div>';}
+}
+async function admSt(id,st){try{await fsUp('commandes',id,{status:st});}catch(e){alert('Erè: '+e.message);}}
+async function delK(id){if(!confirm('Efase kòmand sa?'))return;try{await fsDel('commandes',id);renderAdmin();}catch(e){alert('Erè: '+e.message);}}
+async function delA(id){if(!confirm('Efase ajan sa?'))return;try{await fsDel('agents',id);renderAdmin();}catch(e){alert('Erè: '+e.message);}}
+
+async function addAgent(){
+  var nom=document.getElementById('aNom').value.trim();
+  var code=document.getElementById('aCode2').value.trim();
+  var tel=document.getElementById('aTel').value.trim();
+  var vil=document.getElementById('aVil').value;
+  var pw=document.getElementById('aPass2').value;
+  var kom=Number(document.getElementById('aKom').value)||15;
+  if(!nom||!code||!pw){sal('alAddAgent','Ranpli Non, Kòd ak Modpas.','er');return;}
+  try{
+    var ex=await fsQ('agents','code','==',code);
+    if(ex.length){sal('alAddAgent','Kòd sa deja egziste.','er');return;}
+    await fsAdd('agents',{nom:nom,code:code,tel:tel,vil:vil,pass:pw,komisyon:kom,actif:true});
+    sal('alAddAgent','Ajan ajoute!','ok');
+    ['aNom','aCode2','aTel','aPass2'].forEach(function(id){document.getElementById(id).value='';});
+    setTimeout(function(){closeMo('mAgent');renderAdmin();},1000);
+  }catch(e){sal('alAddAgent','Erè: '+e.message,'er');}
+}
+async function addBureau(){
+  var vil=document.getElementById('bVil').value.trim();
+  var dep=document.getElementById('bDep').value.trim();
+  var adr=document.getElementById('bAdr').value.trim();
+  var tel=document.getElementById('bTel').value.trim();
+  var hor=document.getElementById('bHor').value.trim();
+  if(!vil){sal('alAddBureau','Antre non vil la.','er');return;}
+  try{
+    await fsAdd('bureaux',{vil:vil,dep:dep,adr:adr,tel:tel,hor:hor});
+    sal('alAddBureau','Biwo ajoute!','ok');
+    ['bVil','bDep','bAdr','bTel','bHor'].forEach(function(id){document.getElementById(id).value='';});
+    setTimeout(function(){closeMo('mBureau');renderAdmin();renderBureaux();},1000);
+  }catch(e){sal('alAddBureau','Erè: '+e.message,'er');}
+}
+
+function openPrix(id,agt){
+  selKId=id;selKAgt=agt;
+  document.getElementById('infoKomand').textContent='Kòmand #'+id;
+  document.getElementById('htgVal').value='';
+  document.getElementById('usdVal').value='';
+  document.getElementById('komPrev').style.display='none';
+  openMo('mPrix');
+}
+async function prevKom(){
+  var htg=Number(document.getElementById('htgVal').value);
+  if(htg<=0)return;
+  var pct=15;
+  if(selKAgt){try{var a=await fsGet('agents',selKAgt);if(a)pct=a.komisyon||15;}catch(e){}}
+  var kom=Math.round(htg*pct/100);
+  document.getElementById('komPrev').style.display='block';
+  document.getElementById('komDetail').innerHTML='Total: <strong>'+htg.toLocaleString()+' HTG</strong><br>Komisyon Ajan ('+pct+'%): <strong>'+kom.toLocaleString()+' HTG</strong><br>Net Chita Tann: <strong>'+(htg-kom).toLocaleString()+' HTG</strong>';
+}
+async function savePrix(){
+  var htg=document.getElementById('htgVal').value;
+  var usd=document.getElementById('usdVal').value;
+  if(!htg){sal('alPrix','Antre pri HTG a.','er');return;}
+  try{
+    await fsUp('commandes',selKId,{priceHTG:htg,priceUSD:usd||null});
+    sal('alPrix','Pri mete!','ok');
+    setTimeout(function(){closeMo('mPrix');renderAdmin();},800);
+  }catch(e){sal('alPrix','Erè: '+e.message,'er');}
+}
+
+async function renderAgent(){
+  var el=document.getElementById('agentContent');
+  if(!CU||CR!=='agent'){
+    el.innerHTML='<div class="lbox"><h3>🚴 Espas Ajan</h3><p style="color:var(--gy);margin-bottom:1rem;font-size:.88rem">Konekte kòm ajan.</p><button class="bfull" onclick="openLogin(\'agent\')">Konekte</button></div>';
+    return;
+  }
+  el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--gy)"><span class="spin"></span> Ap chaje...</div>';
+  try{
+    var ks=await fsQ('commandes','agentId','==',CU.id);
+    var livres=ks.filter(function(k){return k.status==='delivered';}).length;
+    var transit=ks.filter(function(k){return k.status==='transit';}).length;
+    var rev=ks.filter(function(k){return k.priceHTG;}).reduce(function(s,k){return s+Number(k.priceHTG);},0);
+    var kom=Math.round(rev*(CU.komisyon||15)/100);
+    var rows='';
+    ks.slice().reverse().forEach(function(k){
+      var telDest=(k.telDest||'').replace(/\D/g,'');
+      rows+='<tr><td><strong>'+k.tracking+'</strong></td><td>'+(k.nomExp||'N/A')+'<br><small>'+(k.telExp||'')+'</small></td><td>'+(k.nomDest||'N/A')+'</td><td>'+(k.vilDest||'N/A')+'</td>'+
+        '<td>'+(k.priceHTG?Number(k.priceHTG).toLocaleString()+' HTG':'<span style="color:var(--go);font-size:.78rem">N/A</span>')+'</td>'+
+        '<td><select onchange="agtSt(\''+k.id+'\',this.value)" style="padding:.2rem .3rem;border-radius:4px;border:1px solid #ccc;font-size:.75rem">'+
+        '<option value="assigned"'+(k.status==='assigned'?' selected':'')+'>👤 Aksepte</option>'+
+        '<option value="transit"'+(k.status==='transit'?' selected':'')+'>🚚 Transit</option>'+
+        '<option value="delivered"'+(k.status==='delivered'?' selected':'')+'>✅ Livré</option>'+
+        '</select></td>'+
+        '<td><a href="https://wa.me/'+telDest+'" target="_blank" class="bgr" style="display:inline-block;padding:.3rem .6rem;border-radius:6px;font-size:.78rem;color:#fff;text-decoration:none;background:var(--gr)">📱</a></td></tr>';
+    });
+    el.innerHTML=
+      '<div class="ph2"><div><div class="ptit">🚴 '+CU.nom+'</div><div style="font-size:.8rem;color:var(--gy)">Vil: '+(CU.vil||'N/A')+' | Komisyon: '+(CU.komisyon||15)+'%</div></div>'+
+      '<button class="bgo2" onclick="renderAgent()">🔄</button></div>'+
+      '<div class="sg"><div class="sc"><div class="sn2">'+ks.length+'</div><div class="sl">Total</div></div>'+
+      '<div class="sc g"><div class="sn2">'+livres+'</div><div class="sl">Livré ✅</div></div>'+
+      '<div class="sc o"><div class="sn2">'+transit+'</div><div class="sl">Transit</div></div>'+
+      '<div class="sc g"><div class="sn2">'+kom.toLocaleString()+'</div><div class="sl">Komisyon HTG 💰</div></div></div>'+
+      '<div class="tbox"><h3>📦 Kòmand Pa Ou ('+ks.length+')</h3><table><thead><tr><th>Tracking</th><th>Kliyan</th><th>Destinatè</th><th>Vil Dest</th><th>Pri</th><th>Estati</th><th>WA</th></tr></thead><tbody>'+
+      (rows||'<tr><td colspan="7" style="text-align:center;color:var(--gy)">Pa gen kòmand</td></tr>')+
+      '</tbody></table></div>';
+  }catch(e){el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--rd)">Erè: '+e.message+'</div>';}
+}
+async function agtSt(id,st){try{await fsUp('commandes',id,{status:st});}catch(e){alert('Erè: '+e.message);}}
+
+async function renderClient(){
+  var el=document.getElementById('clientContent');
+  if(!CU||CR!=='client'){
+    el.innerHTML='<div class="lbox"><h3>📦 Espas Kliyan</h3><p style="color:var(--gy);margin-bottom:1rem;font-size:.88rem">Konekte oswa enskri.</p><button class="bfull" onclick="openLogin(\'client\')">Konekte / Enskri</button></div>';
+    return;
+  }
+  el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--gy)"><span class="spin"></span> Ap chaje...</div>';
+  try{
+    var all=await fsGetAll('commandes');
+    var myTel=CU.tel.replace(/\s/g,'');
+    var ks=all.filter(function(k){return k.telExp&&k.telExp.replace(/\s/g,'')===myTel;});
+    var sm={pending:'⏳ An Atant',assigned:'👤 Asiyen',transit:'🚚 Transit',delivered:'✅ Livré',cancelled:'❌ Anile'};
+    var rows='';
+    ks.slice().reverse().forEach(function(k){
+      rows+='<tr><td><strong>'+k.tracking+'</strong></td><td>'+(k.nomDest||'N/A')+'</td><td style="font-size:.75rem">'+(k.vilDepa||'')+'→'+(k.vilDest||'')+'</td>'+
+        '<td>'+(k.priceHTG?Number(k.priceHTG).toLocaleString()+' HTG':'<span style="color:var(--go);font-size:.75rem">Ap tann pri</span>')+'</td>'+
+        '<td><span class="badge '+(k.status||'pending')+'">'+(sm[k.status]||k.status||'pending')+'</span></td>'+
+        '<td style="font-size:.75rem">'+new Date(k.createdAt).toLocaleDateString()+'</td></tr>';
+    });
+    el.innerHTML=
+      '<div class="ph2"><div><div class="ptit">📦 '+CU.nom+'</div><div style="font-size:.8rem;color:var(--gy)">Tél: '+CU.tel+'</div></div>'+
+      '<div style="display:flex;gap:.4rem"><button class="bbl" onclick="go(\'commande\')">➕ Nouvo Kòmand</button><button class="bgo2" onclick="renderClient()">🔄</button></div></div>'+
+      '<div class="sg"><div class="sc"><div class="sn2">'+ks.length+'</div><div class="sl">Total</div></div>'+
+      '<div class="sc g"><div class="sn2">'+ks.filter(function(k){return k.status==='delivered';}).length+'</div><div class="sl">Livré ✅</div></div>'+
+      '<div class="sc o"><div class="sn2">'+ks.filter(function(k){return k.status==='transit';}).length+'</div><div class="sl">Transit</div></div></div>'+
+      '<div class="tbox"><h3>📋 Istwa Kòmand Ou yo</h3><table><thead><tr><th>Tracking</th><th>Destinatè</th><th>Trajet</th><th>Pri</th><th>Estati</th><th>Dat</th></tr></thead><tbody>'+
+      (rows||'<tr><td colspan="6" style="text-align:center;color:var(--gy)">Pa gen kòmand</td></tr>')+
+      '</tbody></table></div>';
+  }catch(e){el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--rd)">Erè: '+e.message+'</div>';}
+}
+
+waitDB(function(){renderBureaux();});
+</script>
+</body>
+</html>
